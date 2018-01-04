@@ -2,19 +2,21 @@
 var HelloWorld = (function() { "use strict";
 
 	function create_main_fragment(state, component) {
-		var h1, text, text_1;
+		var h1, text, text_1, text_2;
 
 		return {
 			c: function create() {
 				h1 = createElement("h1");
 				text = createText("Hello ");
 				text_1 = createText(state.name);
+				text_2 = createText("!");
 			},
 
 			m: function mount(target, anchor) {
 				insertNode(h1, target, anchor);
 				appendNode(text, h1);
 				appendNode(text_1, h1);
+				appendNode(text_2, h1);
 			},
 
 			p: function update(changed, state) {
