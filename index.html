@@ -15,11 +15,17 @@
         name: 'world'
       }
     })
+
     setTimeout(() => {
       app.set({
         name: 'Jeff'
       })
-    }, 5000);
+    }, 5000)
+
+    console.log(app.get('name'))
+    console.log(app.get())
+
+    app.observe('name', name => console.log(name));
   </script>
 </body>
 
