@@ -12,13 +12,21 @@
     var app = new HelloWorld({
       target: document.querySelector('main'),
       data: {
-        name: 'world'
+        name: 'world',
+        isActive: false,
+        array: [
+          'one, ',
+          'two, ',
+          'three, ',
+          'four',
+        ]
       }
     })
 
     setTimeout(() => {
       app.set({
-        name: 'Jeff'
+        name: 'Jeff',
+        isActive: true
       })
     }, 5000)
 

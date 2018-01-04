@@ -2,7 +2,18 @@
 var HelloWorld = (function() { "use strict";
 
 	function create_main_fragment(state, component) {
-		var h1, text, text_1, text_2;
+		var h1, text, text_1, text_2, text_3, p, text_4, text_5, text_6, div, text_7;
+
+		var current_block_type = select_block_type(state);
+		var if_block = current_block_type(state, component);
+
+		var array = state.array;
+
+		var each_blocks = [];
+
+		for (var i = 0; i < array.length; i += 1) {
+			each_blocks[i] = create_each_block(state, array, array[i], i, component);
+		}
 
 		return {
 			c: function create() {
@@ -10,6 +21,18 @@ var HelloWorld = (function() { "use strict";
 				text = createText("Hello ");
 				text_1 = createText(state.name);
 				text_2 = createText("!");
+				text_3 = createText("\n\n");
+				p = createElement("p");
+				text_4 = createText(state.isActive);
+				text_5 = createText("\n");
+				if_block.c();
+				text_6 = createText("\n\n");
+				div = createElement("div");
+				text_7 = createText("Let's count our results ");
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
 			},
 
 			m: function mount(target, anchor) {
@@ -17,20 +40,154 @@ var HelloWorld = (function() { "use strict";
 				appendNode(text, h1);
 				appendNode(text_1, h1);
 				appendNode(text_2, h1);
+				insertNode(text_3, target, anchor);
+				insertNode(p, target, anchor);
+				appendNode(text_4, p);
+				insertNode(text_5, target, anchor);
+				if_block.m(target, anchor);
+				insertNode(text_6, target, anchor);
+				insertNode(div, target, anchor);
+				appendNode(text_7, div);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].m(div, null);
+				}
 			},
 
 			p: function update(changed, state) {
 				if (changed.name) {
 					text_1.data = state.name;
 				}
+
+				if (changed.isActive) {
+					text_4.data = state.isActive;
+				}
+
+				if (current_block_type !== (current_block_type = select_block_type(state))) {
+					if_block.u();
+					if_block.d();
+					if_block = current_block_type(state, component);
+					if_block.c();
+					if_block.m(text_6.parentNode, text_6);
+				}
+
+				var array = state.array;
+
+				if (changed.array) {
+					for (var i = 0; i < array.length; i += 1) {
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, state, array, array[i], i);
+						} else {
+							each_blocks[i] = create_each_block(state, array, array[i], i, component);
+							each_blocks[i].c();
+							each_blocks[i].m(div, null);
+						}
+					}
+
+					for (; i < each_blocks.length; i += 1) {
+						each_blocks[i].u();
+						each_blocks[i].d();
+					}
+					each_blocks.length = array.length;
+				}
 			},
 
 			u: function unmount() {
 				detachNode(h1);
+				detachNode(text_3);
+				detachNode(p);
+				detachNode(text_5);
+				if_block.u();
+				detachNode(text_6);
+				detachNode(div);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].u();
+				}
+			},
+
+			d: function destroy() {
+				if_block.d();
+
+				destroyEach(each_blocks);
+			}
+		};
+	}
+
+	// (4:0) {{#if isActive}}
+	function create_if_block(state, component) {
+		var p;
+
+		return {
+			c: function create() {
+				p = createElement("p");
+				p.textContent = "wow, this is active!";
+			},
+
+			m: function mount(target, anchor) {
+				insertNode(p, target, anchor);
+			},
+
+			u: function unmount() {
+				detachNode(p);
 			},
 
 			d: noop
 		};
+	}
+
+	// (6:0) {{else}}
+	function create_if_block_1(state, component) {
+		var p;
+
+		return {
+			c: function create() {
+				p = createElement("p");
+				p.textContent = "this is not active, and that sucks...";
+			},
+
+			m: function mount(target, anchor) {
+				insertNode(p, target, anchor);
+			},
+
+			u: function unmount() {
+				detachNode(p);
+			},
+
+			d: noop
+		};
+	}
+
+	// (11:26) {{#each array as row}}
+	function create_each_block(state, array, row, row_index, component) {
+		var text_value = row, text;
+
+		return {
+			c: function create() {
+				text = createText(text_value);
+			},
+
+			m: function mount(target, anchor) {
+				insertNode(text, target, anchor);
+			},
+
+			p: function update(changed, state, array, row, row_index) {
+				if ((changed.array) && text_value !== (text_value = row)) {
+					text.data = text_value;
+				}
+			},
+
+			u: function unmount() {
+				detachNode(text);
+			},
+
+			d: noop
+		};
+	}
+
+	function select_block_type(state) {
+		if (state.isActive) return create_if_block;
+		return create_if_block_1;
 	}
 
 	function HelloWorld(options) {
@@ -78,6 +235,12 @@ var HelloWorld = (function() { "use strict";
 
 	function detachNode(node) {
 		node.parentNode.removeChild(node);
+	}
+
+	function destroyEach(iterations) {
+		for (var i = 0; i < iterations.length; i += 1) {
+			if (iterations[i]) iterations[i].d();
+		}
 	}
 
 	function noop() {}
